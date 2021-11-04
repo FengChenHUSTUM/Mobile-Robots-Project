@@ -13,8 +13,11 @@ Autopilot::Autopilot(ros::NodeHandle& nh)
     : nh_(&nh)
 {
   // receive navdata
-  subNavdata_ = nh.subscribe("ardrone/navdata", 50, &Autopilot::navdataCallback,
-                             this);
+  subNavdata_ = nh.subscribe("/ardrone/navdata", 50, &Autopilot::navdataCallback, this);
+
+  // receive positon and orientation in global space
+  // subPose_ = nh.subscribe("/drone/gt_pose", 50, &Autopilot::poseCallback, this);
+
 
   // commands
   
@@ -37,6 +40,18 @@ void Autopilot::navdataCallback(const ardrone_autonomy::NavdataConstPtr& msg)
   
 }
 
+// void Autopilot::poseCallback(const geometry_msgs::Pose::ConstPtr& msg)
+// {
+//   std::lock_guard<std::mutex> l(poseMutex_);
+//   lastPose_ = *msg;
+// }
+
+// Get the drone position
+// float Autopilot::dronePostion()
+// {
+//   return lastPose_.position.z;
+// }
+
 // Get the drone status.
 Autopilot::DroneStatus Autopilot::droneStatus()
 {
@@ -47,6 +62,29 @@ Autopilot::DroneStatus Autopilot::droneStatus()
   }
   return DroneStatus(navdata.state);
 }
+
+// Get the drone batteryPercent.
+float Autopilot::droneBatteryPercent()
+{
+  ardrone_autonomy::Navdata navdata;
+  {
+    std::lock_guard<std::mutex> l(navdataMutex_);
+    navdata = lastNavdata_;
+  }
+  return navdata.batteryPercent;
+}
+
+// // Get the drone estimated altitude.
+// uint32_t Autopilot::droneHeight()
+// {
+//   ardrone_autonomy::Navdata navdata;
+//   {
+//     std::lock_guard<std::mutex> l(navdataMutex_);
+//     navdata = lastNavdata_;
+//   }
+//   return navdata.tags_height[0];
+// }
+
 
 // Request flattrim calibration.
 bool Autopilot::flattrimCalibrate()
@@ -125,3 +163,4 @@ bool Autopilot::move(double forward, double left, double up,
 }
 
 }  // namespace arp
+

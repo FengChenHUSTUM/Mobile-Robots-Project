@@ -17,10 +17,13 @@
 #include <image_transport/image_transport.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Pose.h>
 #include <ardrone_autonomy/Navdata.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Empty.h>
 #include <std_srvs/Empty.h>
+
+#include<map>
 
 namespace arp {
 
@@ -44,9 +47,29 @@ class Autopilot {
     Looping = 9 // ?
   };
 
+  std::map<DroneStatus, std::string> status_name 
+  {
+    {DroneStatus::Unknown, "Unkown"},
+    {DroneStatus::Inited, "Inited"},
+    {DroneStatus::Flying, "Flying"},
+    {DroneStatus::Hovering, "Hovering"},
+    {DroneStatus::Test, "Test"},
+    {DroneStatus::TakingOff, "TakingOff"},
+    {DroneStatus::Flying2, "Flying2"},
+    {DroneStatus::Landing, "Landing"},
+    {DroneStatus::Looping, "Looping"},
+  };
+
+
   /// \brief Get the drone status.
   /// \return The status.
   DroneStatus droneStatus();
+
+  /// \brief Get the drone batteryPercent
+  /// \return The batteryPercent(float32)
+  float droneBatteryPercent();
+
+  // float dronePostion();
 
   /// \brief Set to automatic control mode.
   void setManual();
@@ -95,6 +118,8 @@ class Autopilot {
   /// \brief Obtain the last navdata package (callback).
   /// @param[out] navdata The navdata message.
   void navdataCallback(const ardrone_autonomy::NavdataConstPtr& msg);
+  // void poseCallback(const geometry_msgs::Pose::ConstPtr& msg);
+
 
   ros::NodeHandle * nh_;  ///< ROS node handle.
   ros::Publisher pubReset_;  ///< The reset publisher -- use to reset the drone (e-stop).
@@ -108,6 +133,10 @@ class Autopilot {
   ardrone_autonomy::Navdata lastNavdata_; ///< Store navdata as it comes in asynchronously.
   std::mutex navdataMutex_; ///< We need to lock navdata access due to asynchronous arrival.
   ros::Subscriber subNavdata_; ///< The subscriber for navdata.
+
+  // ros::Subscriber subPose_;
+  // geometry_msgs::Pose lastPose_;
+  // std::mutex poseMutex_;
 };
 
 } // namespace arp
